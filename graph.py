@@ -69,7 +69,11 @@ def generateRandomGraph(vertices: int, edges: int) -> UndirectedGraph:
 
 
 
-def test_instances():
+def test_instances(is_exact = True, approx_ratio = None):
+    
+    # the approx ratio has to be given if its not exact
+    if(not is_exact): assert approx_ratio
+
     # in the format (edge_list, vertices, answer)
     tests = [
         ([(1, 2), (1, 3), (1, 4), (3, 5), (4, 6)], 6, 1),
@@ -96,11 +100,14 @@ def test_instances():
         ans = None
         # call treewidth solver
         # ans = treewidth(graph)
-        if ans == answer:
+        if (is_exact and ans == answer) or (not is_exact and ans <= approx_ratio * answer):
             correct += 1
         else:
             wrong.append(idx)
     
+    
+    kind_string = "exact" if is_exact else f"{approx_ratio}-approx"
+    print(f"Treewidth estimation ({kind_string})")
     print(f"Passed {correct}/{len(tests)} test cases")
     if len(wrong):
         for i in wrong:

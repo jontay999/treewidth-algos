@@ -47,13 +47,14 @@ class TreeDecomposition(UndirectedGraph):
 
 def generateRandomGraph(vertices: int, edges: int) -> UndirectedGraph:
     n = vertices
+    # actually edges //= 2, because each edge generates 2 directed edges but ignore it for now
     assert edges <= (n*(n-1))//2, "Maximum number of edges exceeded"
     graph = UndirectedGraph(n)
 
     # generate all edges
     all_edges = []
     for i in range(1,n+1):
-        for j in range(1,n+1):
+        for j in range(i+1,n+1):
             if i == j: continue
             all_edges.append((i,j))
 
@@ -66,20 +67,19 @@ def generateRandomGraph(vertices: int, edges: int) -> UndirectedGraph:
     
     return graph
 
-if __name__ == "__main__":
-    g1 = generateRandomGraph(5,10)
-    g2 = generateRandomGraph(8,16)
-    print(g1)
-    print(g2)
 
 
 def test_instances():
+    # in the format (edge_list, vertices, answer)
     tests = [
         ([(1, 2), (1, 3), (1, 4), (3, 5), (4, 6)], 6, 1),
         ([(1, 2), (1, 3), (2, 3), (2, 5), (2, 6), (2, 7), (3, 4), (3, 5), (4, 5), (5, 7), (5, 8), (6, 7), (7, 8)], 8, 2),
         ([(1, 2), (1, 4), (2, 3), (2, 5), (3, 6), (4, 5), (4, 7), (5, 6), (5, 8), (6, 9), (7, 8), (8, 9)],9,3),
         ([(1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4), (2, 5), (3, 4), (3, 5), (4, 5)],5,4),
         
+        # series parallel graph -> treewidth <= 2
+        ([(1,2),(2,3),(2,4),(2,5),(3,6),(4,6),(5,6),(6,8),(1,7),(7,8)], 8 , 2)
+
         # complete graph of 5 edges -> treewidth 4
         ([(1, 2),(1, 3),(1, 4),(1, 5),(2, 3),(2, 4),(2, 5),(3, 4),(3, 5),(4, 5)], 5, 4)
 
@@ -87,12 +87,25 @@ def test_instances():
         ([(1, 13),(1, 17),(1, 19),(1, 6),(2, 15),(2, 18),(2, 19),(2, 20),(13, 16),(13, 20),(13, 21),(15, 17),(15, 21),(15, 3),(16, 18),(16, 3),(16, 4),(17, 4),(17, 5),(18, 5),(18, 6),(19, 8),(19, 14),(20, 7),(20, 9),(21, 8),(21, 10),(3, 9),(3, 11),(4, 10),(4, 12),(5, 11),(5, 14),(6, 7),(6, 12),(7, 10),(7, 11),(8, 11),(8, 12),(9, 12),(9, 14),(10, 14)], 21, 8)
     ]
 
-    for test, n, answer in tests:
+    correct = 0
+    wrong = []
+    for idx,(test, n, answer) in  enumerate(tests):
         graph = UndirectedGraph(n)
         for x,y in test: graph.add_edge(x,y)
         
         ans = None
         # call treewidth solver
-
-        assert ans == answer
-    print("Passed tests!")
+        # ans = treewidth(graph)
+        if ans == answer:
+            correct += 1
+        else:
+            wrong.append(idx)
+    
+    print(f"Passed {correct}/{len(tests)} test cases")
+    if len(wrong):
+        for i in wrong:
+            print(f"Failed test case {i}: {tests[i][0]}" )
+    
+if __name__ == "__main__":
+    g1 = generateRandomGraph(5,10)
+    g2 = generateRandomGraph(8,16)

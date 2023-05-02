@@ -52,12 +52,12 @@ def decompose(G: UndirectedGraph, k: int):
     # check if |E|
     num_e, num_v = len(G.edge_list), G.size
 
-    # note: this number is huge, not relevant for small graphs
+    # note: this number is huge, small graphs will only hit one branch of the control flow
     c1 = (4*k**2 + 12*k + 16) # just a constant
     d = 2*k**3 * (k+1) * c1
 
     # Lemma 2.3
-    if num_e <= k * num_v - (k * (k+1))//2:
+    if num_e > k * num_v - (k * (k+1))//2:
         return False
     
     num_friendly_vertices = 0
@@ -79,9 +79,20 @@ def decompose(G: UndirectedGraph, k: int):
     
     # note that the first condition will typically be true for small graphs because c1 >> num_v
     if(num_friendly_vertices > (num_v / c1)):
-        print("Maximal matching time!")
         # find maximal matching in G
+        matching = G.maximal_matching()
+        
         # compute graph G' = (V', E') by contracting every edge in M
+        G_prime = G.contract_graph(matching)
+        
+        # recursive call
+        return NotImplementedError()
+        result = decompose(G_prime, k)
+        
+        # Lemma 3.4
+        if result is False: return False
+        
+        
         # recursively apply algo to G'
         # if G' has treewidth > k -> G treewidth > k also (refer to Lemma 3.4)
     else:
@@ -94,9 +105,13 @@ def decompose(G: UndirectedGraph, k: int):
 
     
 random.seed(34)
-g1 = generateRandomGraph(10,25)
+g1 = generateRandomGraph(10,8)
+# print(g1)
+# arr = g1.maximal_matching()
+# print(arr)
+# print(g1.contract_graph(arr))
 
-k_guess = 2
+k_guess = 8
 result = decompose(g1, k_guess)
 if result is False:
     print(f"Treewidth of graph > {k_guess}")

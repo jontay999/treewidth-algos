@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import List, Tuple, Set
 
 class UndirectedGraph:
     def __init__(self, size: int):
@@ -37,11 +37,55 @@ class UndirectedGraph:
         return deg
     
     # 2-approximation greedy algorithm
-    def maximal_matching(self) -> List[int]:
-        return []
+    def maximal_matching(self) -> Set[Tuple[int, int]]:
+        edge_idx = len(self.edge_list)-1
+        seen = set()
+        matching = set()
+        while edge_idx >= 0:
+            u,v = self.edge_list[edge_idx]
+            if(u not in seen and v not in seen):
+                matching.add((u,v))
+                seen.add(u)
+                seen.add(v)
+            edge_idx -= 1
+        return matching
     
-    def contract_graph(self, matching: List[int]):
-        return
+    def contract_graph(self, matching: Set[Tuple[int, int]]):
+        # u merges with v to become a big node
+        mapping = {u: v for u,v in matching}
+        new_size = self.size - len(matching)
+        g = UndirectedGraph(new_size)
+
+        # number new edges appropriately
+        new_edges = {}
+        curr_num = 1
+        for i in range(1, self.size+1):
+            if(i not in mapping):
+                new_edges[i] = curr_num
+                curr_num += 1
+
+        # create new edges
+        for node, neighbors in self.edges.items():
+            # get new index, accounts for if node has been contracted 
+            if node in mapping:
+                node1 = new_edges[mapping[node]]
+            else:
+                node1 = new_edges[node]
+            
+
+            for neigh in neighbors:
+                # contracted edge does not appear in new graph
+                if (node, neigh) in matching:
+                    continue
+
+                if neigh in mapping:
+                    node2 = new_edges[mapping[neigh]]
+                else:
+                    node2 = new_edges[neigh]
+                
+                g.add_edge(node1, node2)
+        
+        return g
 
 class TreeDecomposition(UndirectedGraph):
     def __init__(self, size: int):

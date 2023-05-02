@@ -33,10 +33,11 @@ for some d fixed later
 
 """
 
-from graph import UndirectedGraph, generateRandomGraph
+from graph import UndirectedGraph, generateRandomGraph, TreeDecomposition
+from typing import Union
 
 
-def decompose(G: UndirectedGraph, k: int):
+def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
     """
     G: UndirectedGraph
     k: expected tree width
@@ -79,22 +80,36 @@ def decompose(G: UndirectedGraph, k: int):
     
     # note that the first condition will typically be true for small graphs because c1 >> num_v
     if(num_friendly_vertices > (num_v / c1)):
-        # find maximal matching in G
+        """
+        Main idea:
+        - find maximal matching in G
+        - compute graph G' = (V', E') by contracting every edge in M
+        - recursively apply algo to G'
+        - if G' has treewidth > k -> G treewidth > k also (refer to Lemma 3.4)
+        - use tree decomp of G' with width k to build tree decomp of G with width <= 2k+1
+        """
+
+        
         matching = G.maximal_matching()
         
-        # compute graph G' = (V', E') by contracting every edge in M
         G_prime = G.contract_graph(matching)
         
-        # recursive call
-        return NotImplementedError()
-        result = decompose(G_prime, k)
+        # yields a tree decomposition of G_prime of k width
+        
+        result = decompose(G_prime, k) # returns a TreeDecomposition Object
         
         # Lemma 3.4
-        if result is False: return False
+        if result is False: 
+            return False
         
+        reconstruct = result.reconstruct_parent_tree(matching)
+        # given that we contracted the graph, so if we beef everything up again
+        # TODO in TreeDecomposition class
+
+        # construct tree decomposition with treewidth at most 2k+1
+        return result
         
-        # recursively apply algo to G'
-        # if G' has treewidth > k -> G treewidth > k also (refer to Lemma 3.4)
+    
     else:
         print("Compute improved graph time!")
 

@@ -50,7 +50,7 @@ class UndirectedGraph:
             edge_idx -= 1
         return matching
     
-    def contract_graph(self, matching: Set[Tuple[int, int]]):
+    def contract_graph(self, matching: Set[Tuple[int, int]]) -> "UndirectedGraph":
         # u merges with v to become a big node
         mapping = {u: v for u,v in matching}
         new_size = self.size - len(matching)
@@ -99,8 +99,14 @@ class TreeDecomposition(UndirectedGraph):
         if len(self.bags[vertex1]) - 1 > self.width:
             self.width = len(self.bags[vertex1]) - 1
 
-    def width(self):
+    def get_width(self):
         return self.width
+    
+    def reconstruct_parent_tree(self, matching: Set[Tuple[int,int]]) -> "TreeDecomposition":
+        # TODO: for jon to implement
+        return 
+    
+
 
 
 def generateRandomGraph(vertices: int, edges: int) -> UndirectedGraph:

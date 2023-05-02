@@ -1,4 +1,5 @@
 import random
+from typing import List
 
 class UndirectedGraph:
     def __init__(self, size: int):
@@ -19,15 +20,28 @@ class UndirectedGraph:
         self.edges[vertex1].remove(vertex2)
         self.edges[vertex2].remove(vertex1)
     
-    def __str__(self):
+    def __str__(self) -> str:
         string_rep = "Undirected graph with {} vertices\n".format(self.size)
-        for i in range(self.size):
+        for i in range(1, self.size+1):
             curr_edges = sorted(list(self.edges[i]))
             string_rep += str(i) + ": "
             for edge in curr_edges:
                 string_rep += str(edge) + ", "
             string_rep += "\n"
         return string_rep
+    
+    def vertex_degrees(self) -> List[int]:
+        deg = []
+        for i in range(1, self.size+1):
+            deg.append(len(self.edges[i]))
+        return deg
+    
+    # 2-approximation greedy algorithm
+    def maximal_matching(self) -> List[int]:
+        return []
+    
+    def contract_graph(self, matching: List[int]):
+        return
 
 class TreeDecomposition(UndirectedGraph):
     def __init__(self, size: int):
@@ -82,10 +96,10 @@ def test_instances(is_exact = True, approx_ratio = None):
         ([(1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4), (2, 5), (3, 4), (3, 5), (4, 5)],5,4),
         
         # series parallel graph -> treewidth <= 2
-        ([(1,2),(2,3),(2,4),(2,5),(3,6),(4,6),(5,6),(6,8),(1,7),(7,8)], 8 , 2)
+        ([(1,2),(2,3),(2,4),(2,5),(3,6),(4,6),(5,6),(6,8),(1,7),(7,8)], 8 , 2),
 
         # complete graph of 5 edges -> treewidth 4
-        ([(1, 2),(1, 3),(1, 4),(1, 5),(2, 3),(2, 4),(2, 5),(3, 4),(3, 5),(4, 5)], 5, 4)
+        ([(1, 2),(1, 3),(1, 4),(1, 5),(2, 3),(2, 4),(2, 5),(3, 4),(3, 5),(4, 5)], 5, 4),
 
         # long test case 
         ([(1, 13),(1, 17),(1, 19),(1, 6),(2, 15),(2, 18),(2, 19),(2, 20),(13, 16),(13, 20),(13, 21),(15, 17),(15, 21),(15, 3),(16, 18),(16, 3),(16, 4),(17, 4),(17, 5),(18, 5),(18, 6),(19, 8),(19, 14),(20, 7),(20, 9),(21, 8),(21, 10),(3, 9),(3, 11),(4, 10),(4, 12),(5, 11),(5, 14),(6, 7),(6, 12),(7, 10),(7, 11),(8, 11),(8, 12),(9, 12),(9, 14),(10, 14)], 21, 8)
@@ -106,7 +120,7 @@ def test_instances(is_exact = True, approx_ratio = None):
             wrong.append(idx)
     
     
-    kind_string = "exact" if is_exact else f"{approx_ratio}-approx"
+    kind_string = "exact" if is_exact else f"{approx_ratio}-approximation"
     print(f"Treewidth estimation ({kind_string})")
     print(f"Passed {correct}/{len(tests)} test cases")
     if len(wrong):

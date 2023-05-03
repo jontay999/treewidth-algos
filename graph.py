@@ -158,6 +158,7 @@ class UndirectedGraph:
             nx_graph.add_edge(u,v)
         return nx_graph
     
+    # outputs graph in a .gr format
     def write_to_file(self, filename: str):
         with open(filename, 'w') as f:
             f.write(f"p tw {len(self.vertices)} {len(self.edge_list)}\n")

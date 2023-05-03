@@ -49,8 +49,6 @@ def compute_i_simplicial_vertices(G: UndirectedGraph) -> List[int]:
                 break
     return i_simplicial_vertices
 
-
-
 def compute_improved_graph(G: UndirectedGraph, k:int) -> UndirectedGraph:
     """
     https://arxiv.org/pdf/1304.6321.pdf for construction of improved graph
@@ -149,7 +147,6 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         G_prime = G.contract_graph(matching)
         
         # yields a tree decomposition of G_prime of k width
-        return NotImplementedError()
         result = decompose(G_prime, k) # returns a TreeDecomposition Object
         
         # Lemma 3.4

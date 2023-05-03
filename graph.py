@@ -150,29 +150,53 @@ class UndirectedGraph:
         self.size -= 1
 
 
-        
 
+class TreeDecomposition():
+    def __init__(self, graph: UndirectedGraph):
+        self.graph = graph
 
-class TreeDecomposition(UndirectedGraph):
-    def __init__(self, size: int):
-        super.__init__(self, size)
-        self.bags = {i: set() for i in self.vertices}
+        # to figure out what to call the next bag
+        self.next_bag = 1
+
+        # vertex -> bags
+        self.vertex_bags = {i: set() for i in self.graph.vertices}
+
+        # bags -> vertex
+        self.bags = {}
+
         self.width = 0
 
-    def add_to_bag(self, vertex1: int, vertex2: int):
-        assert vertex1 <= self.size and vertex2 <= self.size, f"Vertices have to be in the range [0 - {self.size}]"
-        self.bags[vertex1].add(vertex2)
-        if len(self.bags[vertex1]) - 1 > self.width:
-            self.width = len(self.bags[vertex1]) - 1
+    def add_to_bag(self, vertex: int, bag: int):
+        assert vertex in self.graph.vertices, f"Vertices have to be in {self.graph.vertices}"
+        if(bag not in self.bags): self.bags[bag] = set()
+        self.vertex_bags[vertex].add(bag)
+        self.bags[bag].add(vertex)
+        if len(self.vertex_bags[vertex]) - 1 > self.width:
+            self.width = len(self.vertex_bags[vertex]) - 1
 
-    def get_width(self):
+    def get_width(self) -> int:
         return self.width
+    
+    def increase_bag(self):
+        self.next_bag += 1
+
+    def __str__(self) -> str:
+        string = "Original Graph:"
+        string += str(self.graph) + "\n"
+
+        string += "Bags:\n"
+        for bag, vertices in self.bags.items():
+            string += f"Bag {bag}: {vertices}\n"
+        
+        return string
+
+
+        
     
     def reconstruct_parent_tree(self, matching: Set[Tuple[int,int]]) -> "TreeDecomposition":
         # TODO: for jon to implement
         # matching contains u,v that were contracted, 
         return 
-
 
 
 
@@ -240,6 +264,49 @@ def test_instances(is_exact = True, approx_ratio = None):
         for i in wrong:
             print(f"Failed test case {i}: {tests[i][0]}" )
     
+
+
+
+def known_graph():
+    # using this graph: https://en.wikipedia.org/wiki/File:Tree_decomposition.svg
+    g = UndirectedGraph(8)
+    g.add_edge(1,2)
+    g.add_edge(1,3)
+    g.add_edge(2,3) 
+    g.add_edge(2,5)
+    g.add_edge(2,6)
+    g.add_edge(2,7)
+    g.add_edge(3,4)
+    g.add_edge(3,5)
+    g.add_edge(4,5)
+    g.add_edge(5,7)
+    g.add_edge(5,8)
+    g.add_edge(6,7)
+    g.add_edge(7,8)
+
+    td = TreeDecomposition(g)
+    bags_decomp = [
+        [1,2,3],
+        [2,3,5],
+        [3,4,5],
+        [2,5,7],
+        [2,6,7],
+        [5,7,8]
+    ]
+    for vertices in bags_decomp:
+        bag = td.next_bag
+        for v in vertices:
+            td.add_to_bag(v, bag)
+        td.increase_bag()
+
+    return td
+
+
+
+
 if __name__ == "__main__":
     g1 = generateRandomGraph(5,0.6)
     g2 = generateRandomGraph(8,0.5)
+    td = known_graph()
+    print(td)
+    print(td.get_width())

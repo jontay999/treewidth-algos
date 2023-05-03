@@ -204,7 +204,8 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         # print("G tree width:", treedec.get_width())
         
         # opted to neglect Theorem 2.4
-
+        # TODO: given a tree decomposition of size l, determine if tree decomposition of size k exists
+        
         return treedec
         
     
@@ -235,6 +236,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         if result is False:
             return False
         
+        # TODO
         return NotImplementedError()
         
         
@@ -283,10 +285,9 @@ def test_graph():
 
 # test_networkx()
 random.seed(32)
-g1 = generateRandomGraph(50,0.8)
+g1 = generateRandomGraph(50,0.8) # answer is 43
 g1.write_to_file("g1.txt")
-# g1 = generateRandomGraph(6,0.4)
-result = decompose(g1, 35)
+result = decompose(g1, 44)
 if result is not False:
     print("Trewidth:", result.get_width())
 else:
@@ -294,19 +295,3 @@ else:
 
 tw, td = treewidth(g1)
 print(tw)
-# print(td)
-# print(g1)
-# matching = g1.maximal_matching()
-# print("Matching:", matching)
-# g2, new_edges = g1.contract_graph(matching)
-# print(g2, new_edges)
-# tw,td = treewidth(g2)
-# print(tw,"\n",td)
-
-# g1_nx = g1.convert_to_nx()
-# print(g1_nx)
-# k_guess = 8
-# result = decompose(g1, k_guess)
-# if result is False:
-#     print(f"Treewidth of graph > {k_guess}")
-

@@ -127,15 +127,19 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
 
     # check if |E|
     num_e, num_v = len(G.edge_list), G.size
+    # print("edge num:", num_e)
+    # print("vertex num:", num_v)
 
     # note: this number is huge, small graphs will only hit one branch of the control flow
     c1 = 4*k**2 + 12*k + 16 # just a constant
     c2 = 1 / (8*k**2 + 24 *k + 32)
     d = 2*k**3 * (k+1) * c1
 
-    # Lemma 2.3
-    # TODO some graphs terminate prematurely here, check whether the recursive condition is correct
-    if num_e > k * num_v - (k * (k+1))//2:
+    # first condition because it is a default upperbound ( and will spoil the second condition if not added)
+    # the second condition comes from Lemma 2.3
+    if k <= num_v-1 and num_e > k * num_v - (k * (k+1))//2:
+        print(num_e, k, num_v)
+        print(k * num_v - (k * (k+1))//2)
         return False
     
     # when nodes reach O(1) apply networkx heuristic to get a tree decomposition
@@ -185,7 +189,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
             return False
         
         # Lemma 3.3 to reconstruct a graph with < 2k+1  width
-        print("G_prime tree width:", result.get_width())
+        # print("G_prime tree width:", result.get_width())
         treedec = TreeDecomposition(G)
         for v, bags in result.vertex_bags.items():
             original_v = new_edge_mapping[v]
@@ -197,7 +201,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
             for bag in treedec.vertex_bags[retained_v]:
                 treedec.add_to_bag(contracted_v, bag)
 
-        print("G tree width:", treedec.get_width())
+        # print("G tree width:", treedec.get_width())
         
         # opted to neglect Theorem 2.4
 
@@ -279,11 +283,14 @@ def test_graph():
 
 # test_networkx()
 random.seed(32)
-g1 = generateRandomGraph(50,0.6)
+g1 = generateRandomGraph(50,0.8)
 g1.write_to_file("g1.txt")
 # g1 = generateRandomGraph(6,0.4)
-result = decompose(g1, 39)
-print(result)
+result = decompose(g1, 35)
+if result is not False:
+    print("Trewidth:", result.get_width())
+else:
+    print("Cannot get the k")
 
 tw, td = treewidth(g1)
 print(tw)

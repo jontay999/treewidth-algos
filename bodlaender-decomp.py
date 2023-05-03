@@ -85,7 +85,6 @@ def compute_improved_graph(G: UndirectedGraph, k:int) -> UndirectedGraph:
     return G_i
 
 
-
 # Returns a treewidth and a tree decomposition using networkx
 def treewidth(G: UndirectedGraph) -> Tuple[int, TreeDecomposition]:
     # uses heuristics but run it 20 times and get the best result
@@ -125,8 +124,6 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
     - tree decomp of G with treewwidth <= 4k
 
     """
-    print(f"k: {k}\n")
-    print(G)
 
     # check if |E|
     num_e, num_v = len(G.edge_list), G.size
@@ -143,12 +140,13 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
     # when nodes reach O(1) apply networkx heuristic to get a tree decomposition
     if(num_v < 15):
         tw, td = treewidth(G)
+        if(tw > k): return False
         return td
     
+    # In typical smaller graphs, num_friendly_vertices = num_vertices
     num_friendly_vertices = 0
     vertex_degrees = G.vertex_degrees()
     
-    print("Degrees:", vertex_degrees)
     # low_degrees[i] true if ith vertex has low degree
     low_degrees = {v: deg < d for v, deg in vertex_degrees.items()}
 
@@ -159,8 +157,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
             num_friendly_vertices += 1
             break
     
-    # In typical smaller graphs, num_friendly_vertices = num_vertices
-    print("Num friendly vertices:", num_friendly_vertices)
+    
     
     # note that the first condition will typically be true for small graphs because c1 >> num_v
     if (num_friendly_vertices > (num_v / c1)):
@@ -173,11 +170,12 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         - use tree decomp of G' with width k to build tree decomp of G with width <= 2k+1
         """
 
-        
         matching = G.maximal_matching()
         
-        G_prime = G.contract_graph(matching)
-        
+        G_prime, new_edges = G.contract_graph(matching)
+        new_edge_mapping = {v:u for u,v in new_edges.items()}
+        contracted_edge_mapping = {v: u for u,v in matching}
+
         # yields a tree decomposition of G_prime of k width
         result = decompose(G_prime, k) # returns a TreeDecomposition Object
         
@@ -185,13 +183,24 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         if result is False: 
             return False
         
+        # Lemma 3.3 to reconstruct a graph with < 2k+1  width
+        print("G_prime tree width:", result.get_width())
+        treedec = TreeDecomposition(G)
+        for v, bags in result.vertex_bags.items():
+            original_v = new_edge_mapping[v]
+            for b in bags:
+                treedec.add_to_bag(original_v, b)
+        
+        for retained_v, contracted_v in contracted_edge_mapping.items():
+            # add contracted vertex to all bags with the retained vertex 
+            for bag in treedec.vertex_bags[retained_v]:
+                treedec.add_to_bag(contracted_v, bag)
 
-        reconstruct = result.reconstruct_parent_tree(matching)
-        # given that we contracted the graph, so if we beef everything up again
-        # TODO in TreeDecomposition class
+        print("G tree width:", treedec.get_width())
+        
+        # opted to neglect Theorem 2.4
 
-        # construct tree decomposition with treewidth at most 2k+1
-        return result
+        return treedec
         
     
     else:
@@ -209,13 +218,19 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         # means treewidth larger than k
         if len(i_simplicial_vertices) < c2 * num_v: return False
 
-        # paper is not clear as to whether to apply recursion on improved graph or G
-        # for now assume it is the improved graph
+        # paper is not clear as to whether to apply recursion on improved graph or G, assume G
         for v in i_simplicial_vertices:
             G_prime.remove_node(v)
         
         # recursively apply
         result = decompose(G_prime)
+        
+        #since G' is subgraph, treewidth of G > k.
+        if result is False:
+            return False
+        
+        return NotImplementedError()
+        
         
 
 def test_simplicial_graph():
@@ -262,13 +277,26 @@ def test_graph():
 
 # test_networkx()
 random.seed(32)
-g1 = generateRandomGraph(6,0.4)
+g1 = generateRandomGraph(20,0.4)
+# g1 = generateRandomGraph(6,0.4)
+result = decompose(g1, 7)
+print(result)
+
 tw, td = treewidth(g1)
 print(tw)
 print(td)
+# print(g1)
+# matching = g1.maximal_matching()
+# print("Matching:", matching)
+# g2, new_edges = g1.contract_graph(matching)
+# print(g2, new_edges)
+# tw,td = treewidth(g2)
+# print(tw,"\n",td)
+
 # g1_nx = g1.convert_to_nx()
 # print(g1_nx)
 # k_guess = 8
 # result = decompose(g1, k_guess)
 # if result is False:
 #     print(f"Treewidth of graph > {k_guess}")
+

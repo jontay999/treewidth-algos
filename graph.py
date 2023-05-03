@@ -48,7 +48,7 @@ class UndirectedGraph:
         return matching
     
     # contract graph given a matching
-    def contract_graph(self, matching: Set[Tuple[int, int]]) -> "UndirectedGraph":
+    def contract_graph(self, matching: Set[Tuple[int, int]]) -> Tuple["UndirectedGraph", Dict[int,int]]:
         # u merges with v to become a big node
         mapping = {u: v for u,v in matching}
         new_size = self.size - len(matching)
@@ -83,7 +83,7 @@ class UndirectedGraph:
                 
                 g.add_edge(node1, node2)
         
-        return g
+        return g, new_edges
     
     # definition: neighbors form a clique
     def get_simplicial_vertices(self) -> List[int]:
@@ -95,10 +95,11 @@ class UndirectedGraph:
                 simplicial_vertices.append(u)
         return simplicial_vertices
     
-
+    # checks if graph is simplicial
     def is_simplicial(self) -> bool:
         return len(self.get_simplicial_vertices()) == self.size
     
+
 
     def subgraph(self, nodes: Set[int]) -> "UndirectedGraph":
         num_v = len(nodes)
@@ -150,12 +151,14 @@ class UndirectedGraph:
         self.vertices.remove(node)
         self.size -= 1
 
+
     def convert_to_nx(self) -> nx.Graph:
         nx_graph = nx.Graph()
         for u,v in self.edge_list:
             nx_graph.add_edge(u,v)
         return nx_graph
     
+    # returns a graph with same structure with renumbered vertices
     def randomize(self) -> Tuple["UndirectedGraph", Dict[int,int]]:
         new_graph = UndirectedGraph(self.size)
         new_vertices = list(self.vertices)
@@ -195,8 +198,8 @@ class TreeDecomposition():
         if(bag not in self.bags): self.bags[bag] = set()
         self.vertex_bags[vertex].add(bag)
         self.bags[bag].add(vertex)
-        if len(self.vertex_bags[vertex]) - 1 > self.width:
-            self.width = len(self.vertex_bags[vertex]) - 1
+        if len(self.bags[bag]) - 1 > self.width:
+            self.width = len(self.bags[bag]) - 1
 
     def get_width(self) -> int:
         return self.width
@@ -205,19 +208,15 @@ class TreeDecomposition():
         self.next_bag += 1
 
     def __str__(self) -> str:
-        string = "Original Graph:"
-        string += str(self.graph) + "\n"
+        string = ""
+        # string += str(self.graph) + "\n"
 
         string += "Bags:\n"
         for bag, vertices in self.bags.items():
             string += f"Bag {bag}: {vertices}\n"
         
         return string
-    
-    def reconstruct_parent_tree(self, matching: Set[Tuple[int,int]]) -> "TreeDecomposition":
-        # TODO: for jon to implement
-        # matching contains u,v that were contracted, 
-        return 
+
 
 
 

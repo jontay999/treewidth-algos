@@ -158,6 +158,14 @@ class UndirectedGraph:
             nx_graph.add_edge(u,v)
         return nx_graph
     
+    def write_to_file(self, filename: str):
+        with open(filename, 'w') as f:
+            f.write(f"p tw {len(self.vertices)} {len(self.edge_list)}\n")
+            for u,v in self.edge_list:
+                f.write(f"{u} {v}\n")
+        
+
+
     # returns a graph with same structure with renumbered vertices
     def randomize(self) -> Tuple["UndirectedGraph", Dict[int,int]]:
         new_graph = UndirectedGraph(self.size)
@@ -209,7 +217,6 @@ class TreeDecomposition():
 
     def __str__(self) -> str:
         string = ""
-        # string += str(self.graph) + "\n"
 
         string += "Bags:\n"
         for bag, vertices in self.bags.items():

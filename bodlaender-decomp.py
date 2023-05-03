@@ -134,6 +134,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
     d = 2*k**3 * (k+1) * c1
 
     # Lemma 2.3
+    # TODO some graphs terminate prematurely here, check whether the recursive condition is correct
     if num_e > k * num_v - (k * (k+1))//2:
         return False
     
@@ -147,7 +148,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
     num_friendly_vertices = 0
     vertex_degrees = G.vertex_degrees()
     
-    # low_degrees[i] true if ith vertex has low degree
+    # low_degrees[v] true if vertex v has low degree
     low_degrees = {v: deg < d for v, deg in vertex_degrees.items()}
 
     for v, is_low_degree in low_degrees.items():
@@ -222,6 +223,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         for v in i_simplicial_vertices:
             G_prime.remove_node(v)
         
+
         # recursively apply
         result = decompose(G_prime)
         
@@ -277,14 +279,15 @@ def test_graph():
 
 # test_networkx()
 random.seed(32)
-g1 = generateRandomGraph(20,0.4)
+g1 = generateRandomGraph(50,0.6)
+g1.write_to_file("g1.txt")
 # g1 = generateRandomGraph(6,0.4)
-result = decompose(g1, 7)
+result = decompose(g1, 39)
 print(result)
 
 tw, td = treewidth(g1)
 print(tw)
-print(td)
+# print(td)
 # print(g1)
 # matching = g1.maximal_matching()
 # print("Matching:", matching)

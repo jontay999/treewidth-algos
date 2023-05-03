@@ -84,12 +84,14 @@ def compute_improved_graph(G: UndirectedGraph, k:int) -> UndirectedGraph:
     
     return G_i
 
+
+
 # Returns a treewidth and a tree decomposition using networkx
-def treewidth(G: UndirectedGraph) -> Tuple[int, TreeDecomposition, Dict[int,int]]:
+def treewidth(G: UndirectedGraph) -> Tuple[int, TreeDecomposition]:
     # uses heuristics but run it 20 times and get the best result
     tw, td, mapping = float('inf'), None, None
     
-    for i in range(20):
+    for _ in range(20):
         G_i, mapping_i = G.randomize()
         nx_i = G_i.convert_to_nx()
 
@@ -102,8 +104,13 @@ def treewidth(G: UndirectedGraph) -> Tuple[int, TreeDecomposition, Dict[int,int]
         tw_i, td_i =  treewidth_min_fill_in(nx_i)
         if(tw_i < tw):
             tw, td, mapping = tw_i, td_i, mapping_i
-        
-    return tw, td, mapping
+    
+    treedec = TreeDecomposition(G)
+    for bags in td.nodes:
+        for b in bags:
+            treedec.add_to_bag(mapping[b], treedec.next_bag)
+        treedec.increase_bag()
+    return tw, treedec
 
         
 
@@ -132,6 +139,11 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
     # Lemma 2.3
     if num_e > k * num_v - (k * (k+1))//2:
         return False
+    
+    # when nodes reach O(1) apply networkx heuristic to get a tree decomposition
+    if(num_v < 15):
+        tw, td = treewidth(G)
+        return td
     
     num_friendly_vertices = 0
     vertex_degrees = G.vertex_degrees()
@@ -173,6 +185,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         if result is False: 
             return False
         
+
         reconstruct = result.reconstruct_parent_tree(matching)
         # given that we contracted the graph, so if we beef everything up again
         # TODO in TreeDecomposition class
@@ -202,8 +215,8 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
             G_prime.remove_node(v)
         
         # recursively apply
-        return NotImplementedError()
         result = decompose(G_prime)
+        
 
 def test_simplicial_graph():
     g = UndirectedGraph(5)
@@ -250,10 +263,9 @@ def test_graph():
 # test_networkx()
 random.seed(32)
 g1 = generateRandomGraph(6,0.4)
-tw, td, mapping = treewidth(g1)
+tw, td = treewidth(g1)
 print(tw)
-print(td.nodes)
-print(mapping)
+print(td)
 # g1_nx = g1.convert_to_nx()
 # print(g1_nx)
 # k_guess = 8

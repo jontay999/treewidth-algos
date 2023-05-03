@@ -1,28 +1,27 @@
 import random
-from typing import List, Tuple, Set
+from typing import List, Tuple, Set, Dict
 
 class UndirectedGraph:
     def __init__(self, size: int):
         # assume graph is 1-indexed  vertices numbered 1...size
         assert size >= 1, "You need a graph of with at least 1 vertex"
         self.size = size
+        self.vertices = set(range(1,size+1))
         self.edges = {i: set() for i in range(1,size+1)}
-        self.edge_list = []
+        self.edge_list = set()
 
     def add_edge(self, vertex1: int, vertex2: int):
-        assert vertex1 <= self.size and vertex2 <= self.size, f"Vertices have to be in the range [0 - {self.size}]"
+        assert vertex1 in self.vertices and vertex2 in self.vertices, f"Valid vertices are only: {self.vertices}"
         if(vertex1 == vertex2): return # we don't ban self-loops but will not be taken into account
         self.edges[vertex1].add(vertex2)
         self.edges[vertex2].add(vertex1)
-        self.edge_list.append((vertex1, vertex2))
-
-    def delete_edge(self, vertex1: int, vertex2: int):
-        self.edges[vertex1].remove(vertex2)
-        self.edges[vertex2].remove(vertex1)
+        if(vertex1 > vertex2):
+            vertex1, vertex2 = vertex2, vertex1
+        self.edge_list.add((vertex1, vertex2))
     
     def __str__(self) -> str:
         string_rep = "Undirected graph with {} vertices\n".format(self.size)
-        for i in range(1, self.size+1):
+        for i in self.vertices:
             curr_edges = sorted(list(self.edges[i]))
             string_rep += str(i) + ": "
             for edge in curr_edges:
@@ -30,26 +29,24 @@ class UndirectedGraph:
             string_rep += "\n"
         return string_rep
     
-    def vertex_degrees(self) -> List[int]:
-        deg = []
-        for i in range(1, self.size+1):
-            deg.append(len(self.edges[i]))
+    def vertex_degrees(self) -> Dict[int, int]:
+        deg = {}
+        for v in self.vertices:
+            deg[v] = len(self.edges[v])
         return deg
     
     # 2-approximation greedy algorithm
     def maximal_matching(self) -> Set[Tuple[int, int]]:
-        edge_idx = len(self.edge_list)-1
         seen = set()
         matching = set()
-        while edge_idx >= 0:
-            u,v = self.edge_list[edge_idx]
+        for u,v in self.edge_list:
             if(u not in seen and v not in seen):
                 matching.add((u,v))
                 seen.add(u)
                 seen.add(v)
-            edge_idx -= 1
         return matching
     
+    # contract graph given a matching
     def contract_graph(self, matching: Set[Tuple[int, int]]) -> "UndirectedGraph":
         # u merges with v to become a big node
         mapping = {u: v for u,v in matching}
@@ -59,7 +56,7 @@ class UndirectedGraph:
         # number new edges appropriately
         new_edges = {}
         curr_num = 1
-        for i in range(1, self.size+1):
+        for i in self.vertices:
             if(i not in mapping):
                 new_edges[i] = curr_num
                 curr_num += 1
@@ -86,11 +83,80 @@ class UndirectedGraph:
                 g.add_edge(node1, node2)
         
         return g
+    
+    # definition: neighbors form a clique
+    def get_simplicial_vertices(self) -> List[int]:
+        # TO IMPROVE: currently O(V^3) -> can use a queue and 2 bucket sorts to make it linear
+        simplicial_vertices = []
+        for u in self.vertices:
+            neighbors = self.edges[u] 
+            if all(v in self.edges[w] for v in neighbors for w in neighbors if v != w):
+                simplicial_vertices.append(u)
+        return simplicial_vertices
+    
+
+    def is_simplicial(self) -> bool:
+        return len(self.get_simplicial_vertices()) == self.size
+    
+
+    def subgraph(self, nodes: Set[int]) -> "UndirectedGraph":
+        num_v = len(nodes)
+        sub_g = UndirectedGraph(num_v)
+        mapping = {}
+        curr = 1
+        for node in nodes:
+            mapping[node] = curr
+            curr += 1
+        
+        for node in nodes:
+            for neighbor in self.edges[node]:
+                if neighbor not in nodes: continue
+                u,v = mapping[node], mapping[neighbor]
+                sub_g.add_edge(u,v)
+        return sub_g
+
+    # create deep copy of current graph
+    def copy(self) -> "UndirectedGraph":
+        new_graph = UndirectedGraph(self.size)
+        for u,v in self.edge_list:
+            new_graph.add_edge(u,v)
+        return new_graph
+    
+    # will throw an error if edge does not exist
+    def remove_edge(self, u: int, v:int):
+        assert u in self.vertices and v in self.vertices, f"{u} or {v} are not valid vertices"
+        assert u in self.edges[v] and v in self.edges[u], f"{u}-{v} is not a valid edge"
+        if u > v: u,v = v,u
+        assert (u,v) in self.edge_list, f"Something probably went wrong if it only threw an error here"
+        self.edges[u].remove(v)
+        self.edges[v].remove(u)
+        self.edge_list.remove((u,v))
+
+
+    def remove_node(self, node: int):
+        assert node in self.vertices, "Not valid vertex"
+        for neighbor in self.edges[node]:
+            if node > neighbor:
+                u,v = neighbor, node
+            else:
+                u,v = node, neighbor
+            
+            # only need to remove the neighbor, as we will completely delete the self.edges[node] after
+            self.edges[neighbor].remove(node)
+            self.edge_list.remove((u,v))
+        
+        del self.edges[node]
+        self.vertices.remove(node)
+        self.size -= 1
+
+
+        
+
 
 class TreeDecomposition(UndirectedGraph):
     def __init__(self, size: int):
         super.__init__(self, size)
-        self.bags = {i: set() for i in range(1,size+1)}
+        self.bags = {i: set() for i in self.vertices}
         self.width = 0
 
     def add_to_bag(self, vertex1: int, vertex2: int):
@@ -104,15 +170,15 @@ class TreeDecomposition(UndirectedGraph):
     
     def reconstruct_parent_tree(self, matching: Set[Tuple[int,int]]) -> "TreeDecomposition":
         # TODO: for jon to implement
+        # matching contains u,v that were contracted, 
         return 
-    
 
 
 
-def generateRandomGraph(vertices: int, edges: int) -> UndirectedGraph:
+
+def generateRandomGraph(vertices: int, probability: float) -> UndirectedGraph:
+    assert 0 < probability <= 1, "Probability has to be within 0-1"
     n = vertices
-    # actually edges //= 2, because each edge generates 2 directed edges but ignore it for now
-    assert edges <= (n*(n-1))//2, "Maximum number of edges exceeded"
     graph = UndirectedGraph(n)
 
     # generate all edges
@@ -122,12 +188,9 @@ def generateRandomGraph(vertices: int, edges: int) -> UndirectedGraph:
             if i == j: continue
             all_edges.append((i,j))
 
-    random.shuffle(all_edges)
-
-    for i in range(edges):
-        new_edge = all_edges.pop()
-        v1, v2 = new_edge
-        graph.add_edge(v1,v2)
+    for u,v in all_edges:
+        if random.random() < probability:
+            graph.add_edge(u,v)
     
     return graph
 
@@ -178,5 +241,5 @@ def test_instances(is_exact = True, approx_ratio = None):
             print(f"Failed test case {i}: {tests[i][0]}" )
     
 if __name__ == "__main__":
-    g1 = generateRandomGraph(5,10)
-    g2 = generateRandomGraph(8,16)
+    g1 = generateRandomGraph(5,0.6)
+    g2 = generateRandomGraph(8,0.5)

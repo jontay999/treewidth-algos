@@ -1,5 +1,6 @@
 import random
-from typing import List, Tuple, Set, Dict
+from typing import List, Tuple, Set, Dict, Union
+import networkx as nx
 
 class UndirectedGraph:
     def __init__(self, size: int):
@@ -149,7 +150,30 @@ class UndirectedGraph:
         self.vertices.remove(node)
         self.size -= 1
 
+    def convert_to_nx(self) -> nx.Graph:
+        nx_graph = nx.Graph()
+        for u,v in self.edge_list:
+            nx_graph.add_edge(u,v)
+        return nx_graph
+    
+    def randomize(self) -> Tuple["UndirectedGraph", Dict[int,int]]:
+        new_graph = UndirectedGraph(self.size)
+        new_vertices = list(self.vertices)
+        original_mapping = {v: i for i, v in enumerate(new_vertices)}
 
+        random.shuffle(new_vertices)
+        new_mapping = {i:v for i,v in enumerate(new_vertices)}
+
+        restored_mapping = {}
+        for u,v in self.edge_list:
+            new_u = new_mapping[original_mapping[u]]
+            new_v = new_mapping[original_mapping[v]]
+            restored_mapping[new_u] = u
+            restored_mapping[new_v] = v
+            new_graph.add_edge(new_u, new_v)
+        return new_graph, restored_mapping
+
+        
 
 class TreeDecomposition():
     def __init__(self, graph: UndirectedGraph):
@@ -189,9 +213,6 @@ class TreeDecomposition():
             string += f"Bag {bag}: {vertices}\n"
         
         return string
-
-
-        
     
     def reconstruct_parent_tree(self, matching: Set[Tuple[int,int]]) -> "TreeDecomposition":
         # TODO: for jon to implement

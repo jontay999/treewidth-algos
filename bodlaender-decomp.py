@@ -1,7 +1,5 @@
 # Implementation of algorithm described in https://epubs.siam.org/doi/pdf/10.1137/S0097539793251219
 # A LINEAR-TIME ALGORITHM FOR FINDING TREE-DECOMPOSITIONS OF SMALL TREEWIDTH*
-
-import random
 """
 Step 1:
 apply O(n^2) algorithm that outputs either
@@ -29,12 +27,13 @@ for some d fixed later
 - simplicial vertex: neighbors form a clique
 - improved graph: obtained by adding edges between all vertices that have at least k+1 common neighbors of degree <= k
 - I-simplicial: simplicial in the improved graph of G and has degree <= k in G
-
-
 """
 
 from graph import UndirectedGraph, generateRandomGraph, TreeDecomposition
-from typing import Union, List, Set
+from typing import Union, List, Set, Tuple, Dict
+import random
+import networkx as nx
+from networkx.algorithms.approximation import treewidth_min_degree, treewidth_min_fill_in
 
 def compute_i_simplicial_vertices(G: UndirectedGraph) -> List[int]:
     i_simplicial_vertices = []
@@ -85,7 +84,28 @@ def compute_improved_graph(G: UndirectedGraph, k:int) -> UndirectedGraph:
     
     return G_i
 
+# Returns a treewidth and a tree decomposition using networkx
+def treewidth(G: UndirectedGraph) -> Tuple[int, TreeDecomposition, Dict[int,int]]:
+    # uses heuristics but run it 20 times and get the best result
+    tw, td, mapping = float('inf'), None, None
+    
+    for i in range(20):
+        G_i, mapping_i = G.randomize()
+        nx_i = G_i.convert_to_nx()
 
+        # Use min degree heuristic
+        tw_i, td_i = treewidth_min_degree(nx_i)
+        if(tw_i < tw):
+            tw, td, mapping = tw_i, td_i, mapping_i
+
+        # use min fill in heuristic
+        tw_i, td_i =  treewidth_min_fill_in(nx_i)
+        if(tw_i < tw):
+            tw, td, mapping = tw_i, td_i, mapping_i
+        
+    return tw, td, mapping
+
+        
 
 
 def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
@@ -185,11 +205,6 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         return NotImplementedError()
         result = decompose(G_prime)
 
-    
-
-
-
-
 def test_simplicial_graph():
     g = UndirectedGraph(5)
     g.add_edge(1,2)
@@ -219,7 +234,6 @@ def test_simplicial_graph():
     print("Passed simplicial tests!")
 
 
-
 def test_graph():
     random.seed(34)
     
@@ -233,8 +247,16 @@ def test_graph():
     print(improved_graph)
 
 
-g1 = generateRandomGraph(10,0.4)
-k_guess = 8
-result = decompose(g1, k_guess)
-if result is False:
-    print(f"Treewidth of graph > {k_guess}")
+# test_networkx()
+random.seed(32)
+g1 = generateRandomGraph(6,0.4)
+tw, td, mapping = treewidth(g1)
+print(tw)
+print(td.nodes)
+print(mapping)
+# g1_nx = g1.convert_to_nx()
+# print(g1_nx)
+# k_guess = 8
+# result = decompose(g1, k_guess)
+# if result is False:
+#     print(f"Treewidth of graph > {k_guess}")

@@ -161,8 +161,6 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
             num_friendly_vertices += 1
             break
     
-    
-    
     # note that the first condition will typically be true for small graphs because c1 >> num_v
     if (num_friendly_vertices > (num_v / c1)):
         """

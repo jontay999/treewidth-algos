@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple, Set, Dict, Union
+from typing import List, Tuple, Set, Dict
 import networkx as nx
 
 class UndirectedGraph:
@@ -98,8 +98,6 @@ class UndirectedGraph:
     # checks if graph is simplicial
     def is_simplicial(self) -> bool:
         return len(self.get_simplicial_vertices()) == self.size
-    
-
 
     def subgraph(self, nodes: Set[int]) -> "UndirectedGraph":
         num_v = len(nodes)
@@ -134,7 +132,6 @@ class UndirectedGraph:
         self.edges[v].remove(u)
         self.edge_list.remove((u,v))
 
-
     def remove_node(self, node: int):
         assert node in self.vertices, "Not valid vertex"
         for neighbor in self.edges[node]:
@@ -155,7 +152,6 @@ class UndirectedGraph:
         assert node not in self.vertices
         self.size += 1
         self.vertices.add(node)
-
 
     def convert_to_nx(self) -> nx.Graph:
         nx_graph = nx.Graph()
@@ -195,7 +191,6 @@ class UndirectedGraph:
 class TreeDecomposition():
     def __init__(self, graph: UndirectedGraph):
         self.graph = graph
-
         # to figure out what to call the next bag
         self.next_bag = 1
 
@@ -204,7 +199,6 @@ class TreeDecomposition():
 
         # bags -> vertex
         self.bags = {}
-
         self.width = 0
 
     def add_to_bag(self, vertex: int, bag: int):
@@ -223,15 +217,11 @@ class TreeDecomposition():
 
     def __str__(self) -> str:
         string = ""
-
         string += "Bags:\n"
         for bag, vertices in self.bags.items():
             string += f"Bag {bag}: {vertices}\n"
         
         return string
-
-
-
 
 def generateRandomGraph(vertices: int, probability: float) -> UndirectedGraph:
     assert 0 < probability <= 1, "Probability has to be within 0-1"

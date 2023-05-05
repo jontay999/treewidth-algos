@@ -35,16 +35,15 @@ import random
 import networkx as nx
 from networkx.algorithms.approximation import treewidth_min_degree, treewidth_min_fill_in
 
-def compute_i_simplicial_vertices(G: UndirectedGraph) -> List[int]:
-    i_simplicial_vertices = []
-    num_v = G.size
-    vertex_set = set(range(1,num_v+1))
-    for v in range(1, num_v+1):
+def compute_i_simplicial_vertices(G: UndirectedGraph) -> Set[int]:
+    i_simplicial_vertices = set()
+    vertex_set = G.vertices
+    for v in vertex_set:
         neighbors = G.edges[v]
         non_neighbors = vertex_set - neighbors - set([v])
         for u in non_neighbors:
             if G.subgraph(neighbors | set([u])).is_simplicial():
-                i_simplicial_vertices.append(v)
+                i_simplicial_vertices.add(v)
                 break
     return i_simplicial_vertices
 
@@ -210,7 +209,6 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         
     
     else:
-        print("Compute improved graph time!")
         # improving graph does not affect treewidth
         G_prime = compute_improved_graph(G, k)
         i_simplicial_vertices = compute_i_simplicial_vertices(G_prime)
@@ -220,24 +218,50 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
         for v, deg in degrees_prime.items():
             if deg >= k+1: return False
 
-        print("I_simplicial:", i_simplicial_vertices)
         # means treewidth larger than k
         if len(i_simplicial_vertices) < c2 * num_v: return False
 
-        # paper is not clear as to whether to apply recursion on improved graph or G, assume G
+        # apply modifications to a copy of G
+        G_copy = G.copy()
         for v in i_simplicial_vertices:
-            G_prime.remove_node(v)
+            G_copy.remove_node(v)
         
-
         # recursively apply
-        result = decompose(G_prime)
+        result = decompose(G_copy, k)
         
-        #since G' is subgraph, treewidth of G > k.
+        # since G_copy is subgraph, treewidth of G_copy > k, means treewidth G > k.
         if result is False:
             return False
         
-        # TODO
-        return NotImplementedError()
+        # Result = (X,T) , Tree Decomposition
+        # For all i-simplicial vertices called v, all of v' neighbors are a subset of a bag, b in  X
+        # add a new node v' to T with the bag containing v' (b') = v + v's neighbors, and make b', adjacent to b
+        # such a bag b exists by lemma 4.8
+
+        # duplicate the old treedec
+        treedec = TreeDecomposition(G)
+        for v, bags in result.vertex_bags.items():
+            for b in bags:
+                treedec.add_to_bag(v, b)
+
+        # add back I-simplicial vertices in the treedec
+        for v in i_simplicial_vertices:
+            found_bag = False
+            neighbors = G.edges[v] - i_simplicial_vertices
+            for bag, bag_vertices in result.bags.items():
+                if len(bag_vertices.intersection(neighbors)) == len(neighbors):
+                    next_bag = treedec.next_bag
+                    treedec.add_to_bag(v,next_bag)
+                    for neigh in G.edges[v]:
+                        treedec.add_to_bag(neigh, next_bag)
+                    treedec.increase_bag()
+                    found_bag = True
+                    break
+            
+            if not found_bag:
+                raise Exception("Lemma 4.8 has failed us!")
+            
+        return treedec
         
         
 
@@ -286,7 +310,6 @@ def test_graph():
 # test_networkx()
 random.seed(32)
 g1 = generateRandomGraph(50,0.8) # answer is 43
-g1.write_to_file("g1.txt")
 result = decompose(g1, 44)
 if result is not False:
     print("Trewidth:", result.get_width())

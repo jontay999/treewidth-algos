@@ -151,6 +151,11 @@ class UndirectedGraph:
         self.vertices.remove(node)
         self.size -= 1
 
+    def add_node(self, node: int):
+        assert node not in self.vertices
+        self.size += 1
+        self.vertices.add(node)
+
 
     def convert_to_nx(self) -> nx.Graph:
         nx_graph = nx.Graph()

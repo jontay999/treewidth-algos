@@ -166,8 +166,6 @@ class UndirectedGraph:
             for u,v in self.edge_list:
                 f.write(f"{u} {v}\n")
         
-
-
     # returns a graph with same structure with renumbered vertices
     def randomize(self) -> Tuple["UndirectedGraph", Dict[int,int]]:
         new_graph = UndirectedGraph(self.size)

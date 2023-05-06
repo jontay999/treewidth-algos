@@ -174,6 +174,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
 
         matching = G.maximal_matching()
         
+        # This produces a minor of the original graph, G'
         G_prime, new_edges = G.contract_graph(matching)
         new_edge_mapping = {v:u for u,v in new_edges.items()}
         contracted_edge_mapping = {v: u for u,v in matching}
@@ -197,8 +198,6 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
             # add contracted vertex to all bags with the retained vertex 
             for bag in treedec.vertex_bags[retained_v]:
                 treedec.add_to_bag(contracted_v, bag)
-
-        # print("G tree width:", treedec.get_width())
         
         # opted to neglect Theorem 2.4
         # TODO: given a tree decomposition of size l, determine if tree decomposition of size k exists

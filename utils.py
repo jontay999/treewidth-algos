@@ -148,6 +148,15 @@ def test_treewidth(treewidth_solver: Callable, is_exact: bool = True, approx_rat
         for i in wrong:
             print(f"Failed test case {i}: {tests[i][0]}" )
 
+def test_graph_functions():
+    random.seed(34)   
+    g1 = generateRandomGraph(10,0.4)
+    matching = g1.maximal_matching()
+    contracted_graph, matching = g1.contract_graph(matching)
+    assert matching == {1: 1, 4: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7}
+    improved_graph = compute_improved_graph(g1, 2)
+    assert improved_graph == g1
+
 def test_simplicial_graph():
     g = UndirectedGraph(5)
     g.add_edge(1,2)

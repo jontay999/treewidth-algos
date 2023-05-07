@@ -33,6 +33,7 @@ def treewidth(G: UndirectedGraph) -> Tuple[int, TreeDecomposition]:
         treedec.increase_bag()
     return tw, treedec
 
+# Bodlaender's 4-approx
 def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
     """
     G: UndirectedGraph
@@ -170,17 +171,6 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
                 raise Exception("Lemma 4.8 has failed us!")
             
         return treedec
-
-
-def test_graph_functions():
-    random.seed(34)   
-    g1 = generateRandomGraph(10,0.4)
-    matching = g1.maximal_matching()
-    contracted_graph, matching = g1.contract_graph(matching)
-    assert matching == {1: 1, 4: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7}
-    improved_graph = compute_improved_graph(g1, 2)
-    assert improved_graph == g1
-
 
 if __name__ == "__main__":
     test_simplicial_graph() 

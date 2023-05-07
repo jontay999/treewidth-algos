@@ -1,4 +1,5 @@
-from graph import Graph, TreeDecomposition
+from UndirectedGraph import UndirectedGraph 
+from TreeDecomposition import TreeDecomposition
 import sys
 
 # Implements 2k + 1 - approximation of a graph's treewidth as demonstrated in https://arxiv.org/pdf/2104.07463.pdf.

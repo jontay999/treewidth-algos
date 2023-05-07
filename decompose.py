@@ -1,92 +1,15 @@
 # Implementation of algorithm described in https://epubs.siam.org/doi/pdf/10.1137/S0097539793251219
 # A LINEAR-TIME ALGORITHM FOR FINDING TREE-DECOMPOSITIONS OF SMALL TREEWIDTH*
-"""
-Step 1:
-apply O(n^2) algorithm that outputs either
--  treewidth of G > k
--  tree decomposition with  width <= 4k
 
-Step 2: use graph minors
-
-- G is minor of H if G can be obtained via vertex/edge deletion or edge contractions
-- every graph has finite set of graphs that is closed under minors called obstruction set
-- graph belongs to this set iff it has no graph from the obstruction set as a minor
-- class of graphs with treewidth <= k is closed under minors for every fixed value of k
-
-Check if the input graph is like that
-- using dynamic programming in linear time
-"""
-
-"""
-Algorithm terms
-
-for some d fixed later
-- low-degree vertex:  degree <= d
-- high-degree vertex:  degree > d
-- friendly vertex: is low-degree, and adjacent to another low-degree vertex
-- simplicial vertex: neighbors form a clique
-- improved graph: obtained by adding edges between all vertices that have at least k+1 common neighbors of degree <= k
-- I-simplicial: simplicial in the improved graph of G and has degree <= k in G
-"""
-
-from graph import UndirectedGraph, generateRandomGraph, TreeDecomposition
-from typing import Union, List, Set, Tuple, Dict
-import random
-import networkx as nx
-from networkx.algorithms.approximation import treewidth_min_degree, treewidth_min_fill_in
-
-def compute_i_simplicial_vertices(G: UndirectedGraph) -> Set[int]:
-    i_simplicial_vertices = set()
-    vertex_set = G.vertices
-    for v in vertex_set:
-        neighbors = G.edges[v]
-        non_neighbors = vertex_set - neighbors - set([v])
-        for u in non_neighbors:
-            if G.subgraph(neighbors | set([u])).is_simplicial():
-                i_simplicial_vertices.add(v)
-                break
-    return i_simplicial_vertices
-
-def compute_improved_graph(G: UndirectedGraph, k:int) -> UndirectedGraph:
-    """
-    https://arxiv.org/pdf/1304.6321.pdf for construction of improved graph
-    Definition 2.5: Given a graph G = (V, E) and an integer k, the improved graph of G, denoted
-    G_i , is obtained by adding an edge between each pair of vertices with at least k + 1 common
-    neighbors of degree at most k in G.
-    """
-    G_i  = G.copy()
-    degrees = G.vertex_degrees()
-    vertex_pairs = []
-    vertices = list(G.vertices)
-    num_v = len(vertices)
-    for i in range(num_v):
-        for j in range(i+1, num_v):
-            u,v = vertices[i], vertices[j]
-            if u > v: u,v = v,u
-            if v in G.edges[u]: continue # existing edges ignored
-            common_neighbors = G.edges[u].intersection(G.edges[v])
-            
-            num_good_neighbors = len(common_neighbors)
-            
-            # ensure good neighbors have deg <= k
-            for neigh in common_neighbors:
-                if degrees[neigh] <= k: continue
-                num_good_neighbors -= 1
-            
-            if num_good_neighbors < k+1: continue
-            vertex_pairs.append((u,v))
-    
-    print("New vertex pairs:", vertex_pairs)
-
-    for u,v in vertex_pairs:
-        G_i.add_edge(u,v)
-    
-    return G_i
-
+from UndirectedGraph import UndirectedGraph
+from TreeDecomposition import TreeDecomposition
+from typing import Tuple, Union, Set
+from networkx.algorithms.approximation.treewidth import *
+from utils import *
 
 # Returns a treewidth and a tree decomposition using networkx
 def treewidth(G: UndirectedGraph) -> Tuple[int, TreeDecomposition]:
-    # uses heuristics but run it 20 times and get the best result
+    # uses heuristics but run it 20 times Monte Carlo style 
     tw, td, mapping = float('inf'), None, None
     
     for _ in range(20):
@@ -110,9 +33,6 @@ def treewidth(G: UndirectedGraph) -> Tuple[int, TreeDecomposition]:
         treedec.increase_bag()
     return tw, treedec
 
-        
-
-
 def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
     """
     G: UndirectedGraph
@@ -124,21 +44,15 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
 
     """
 
-    # check if |E|
     num_e, num_v = len(G.edge_list), G.size
-    # print("edge num:", num_e)
-    # print("vertex num:", num_v)
 
     # note: this number is huge, small graphs will only hit one branch of the control flow
     c1 = 4*k**2 + 12*k + 16 # just a constant
     c2 = 1 / (8*k**2 + 24 *k + 32)
     d = 2*k**3 * (k+1) * c1
 
-    # first condition because it is a default upperbound ( and will spoil the second condition if not added)
-    # the second condition comes from Lemma 2.3
+    # first condition because it is a default upperbound and the second condition comes from Lemma 2.3
     if k <= num_v-1 and num_e > k * num_v - (k * (k+1))//2:
-        print(num_e, k, num_v)
-        print(k * num_v - (k * (k+1))//2)
         return False
     
     # when nodes reach O(1) apply networkx heuristic to get a tree decomposition
@@ -187,7 +101,6 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
             return False
         
         # Lemma 3.3 to reconstruct a graph with < 2k+1  width
-        # print("G_prime tree width:", result.get_width())
         treedec = TreeDecomposition(G)
         for v, bags in result.vertex_bags.items():
             original_v = new_edge_mapping[v]
@@ -199,9 +112,7 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
             for bag in treedec.vertex_bags[retained_v]:
                 treedec.add_to_bag(contracted_v, bag)
         
-        # opted to neglect Theorem 2.4
-        # TODO: given a tree decomposition of size l, determine if tree decomposition of size k exists
-        
+        # opted to neglect Theorem 2.4: given a tree decomposition of size l, determine if tree decomposition of size k exists
         return treedec
         
     
@@ -259,59 +170,20 @@ def decompose(G: UndirectedGraph, k: int) -> Union[bool, TreeDecomposition]:
                 raise Exception("Lemma 4.8 has failed us!")
             
         return treedec
-        
-        
-
-def test_simplicial_graph():
-    g = UndirectedGraph(5)
-    g.add_edge(1,2)
-    g.add_edge(1,3)
-    g.add_edge(1,4)
-    g.add_edge(2,3)
-    g.add_edge(3,4)
-    g.add_edge(3,5)
-    simplicial = sorted(g.get_simplicial_vertices())
-    ans = [2,4,5]
-    assert ans == simplicial, f"Failed simplicial test: {ans} != {simplicial}"
-
-    g = UndirectedGraph(6)
-    g.add_edge(1,2)
-    g.add_edge(1,3)
-    g.add_edge(1,4)
-    g.add_edge(2,3)
-    g.add_edge(2,5)
-    g.add_edge(3,4)
-    g.add_edge(3,5)
-    g.add_edge(3,6)
-    simplicial = sorted(g.get_simplicial_vertices())
-    ans = [4,5,6]
-    assert ans == simplicial, f"Failed simplicial test: {ans} != {simplicial}"
 
 
-    print("Passed simplicial tests!")
-
-
-def test_graph():
-    random.seed(34)
-    
-    test_simplicial_graph()    
-
+def test_graph_functions():
+    random.seed(34)   
     g1 = generateRandomGraph(10,0.4)
     matching = g1.maximal_matching()
-    contracted_graph = g1.contract_graph(matching)
+    contracted_graph, matching = g1.contract_graph(matching)
+    assert matching == {1: 1, 4: 2, 6: 3, 7: 4, 8: 5, 9: 6, 10: 7}
+    improved_graph = compute_improved_graph(g1, 2)
+    assert improved_graph == g1
 
-    improved_graph = compute_improved_graph(g1, 4)
-    print(improved_graph)
 
-
-# test_networkx()
-random.seed(32)
-g1 = generateRandomGraph(50,0.8) # answer is 43
-result = decompose(g1, 44)
-if result is not False:
-    print("Trewidth:", result.get_width())
-else:
-    print("Cannot get the k")
-
-tw, td = treewidth(g1)
-print(tw)
+if __name__ == "__main__":
+    test_simplicial_graph() 
+    test_graph_functions()
+    random.seed(34)
+    test_treewidth(decompose, False, 4)
